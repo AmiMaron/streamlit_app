@@ -14,21 +14,18 @@ ax.set_xlabel("Rating (mean)")
 ax.set_ylabel("Count")
 st.pyplot(fig)
 
-# plotting the 5 worst rated products
-def plot_worst_rated(data):
-    # Plotting the 5 worst rated products
-    worst_rated = data.sort_values(by='rating (mean)').head(5)
-    plt.figure(figsize=(10, 5))
-    plt.barh(worst_rated['title'], worst_rated['rating (mean)'], color='skyblue')
-    plt.title('5 Worst Rated Products')
-    plt.xlabel('Rating')
-    plt.ylabel('Product')
-    plt.gca().invert_yaxis()
-    plt.tight_layout()
-    return plt
-
 # Get the most popular category from the "dominant_category" column
 st.subheader("Most Popular Category")
 most_popular_category = data["dominant_category"].mode()[0]
 st.write(f"The most popular category is: {most_popular_category}")
-plot_worst_rated(data)
+
+# Calculate the worst products based on rating and number of reviews
+st.subheader("5 Worst Rated Products")
+data['weighted_rating'] = data['rating (mean)'] * data['number of reviews']
+worst_products = data.nsmallest(5, 'weighted_rating')[['title', 'rating (mean)', 'number of reviews']]
+fig, ax = plt.subplots()
+ax.barh(worst_products['title'], worst_products['weighted_rating'], color='red')
+ax.set_title("5 Worst Rated Products")
+ax.set_xlabel("Weighted Rating")
+ax.set_ylabel("Product Title")
+st.pyplot(fig)
