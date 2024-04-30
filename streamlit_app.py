@@ -22,7 +22,7 @@ st.write(f"The most popular category is: {most_popular_category}")
 # Calculate the worst products based on rating and number of reviews
 st.subheader("5 Worst Rated Products")
 data['weighted_rating'] = data['rating (mean)'] * data['number of reviews']
-worst_products = data.nsmallest(5, 'weighted_rating')[['title', 'rating (mean)', 'number of reviews']]
+worst_products = data.nsmallest(5, 'weighted_rating')[['title', 'rating (mean)', 'number of reviews', 'weighted_rating']]
 fig, ax = plt.subplots()
 ax.barh(worst_products['title'], worst_products['weighted_rating'], color='red')
 ax.set_title("5 Worst Rated Products")
