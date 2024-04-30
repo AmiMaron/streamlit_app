@@ -31,3 +31,4 @@ def plot_worst_rated(data):
 st.subheader("Most Popular Category")
 most_popular_category = data["dominant_category"].mode()[0]
 st.write(f"The most popular category is: {most_popular_category}")
+plot_worst_rated(data)
