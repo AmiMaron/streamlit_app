@@ -19,7 +19,7 @@ def plot_worst_rated(data):
     # Plotting the 5 worst rated products
     worst_rated = data.sort_values(by='rating (mean)').head(5)
     plt.figure(figsize=(10, 5))
-    plt.barh(worst_rated['product_title'], worst_rated['rating (mean)'], color='skyblue')
+    plt.barh(worst_rated['title'], worst_rated['rating (mean)'], color='skyblue')
     plt.title('5 Worst Rated Products')
     plt.xlabel('Rating')
     plt.ylabel('Product')
