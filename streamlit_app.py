@@ -6,48 +6,34 @@ import seaborn as sns
 # Load the Excel file
 data = pd.read_excel("updated_categories_reviews_corrected.xlsx")
 
-# Title of the dashboard
+# Filtering out the products with poor reviews
+threshold_rating = 2  # Threshold for average rating to consider as bad
+urgent_products = data[(data['rate_average'] <= threshold_rating) & (data['num_of_rates'] > 20)]
+
+# Starting Streamlit app
 st.title('Amazon Seller Dashboard')
+st.write('This dashboard highlights products with urgent need for attention based on customer reviews.')
 
-# Sidebar for user inputs
-st.sidebar.header('User Input Features')
-category_options = ['All Categories'] + list(data['product_category'].unique())
-selected_category = st.sidebar.selectbox('Select Product Category', category_options)
+# Display the filtered data
+st.subheader('Urgent Products')
+st.dataframe(urgent_products)
 
-# Filter data based on selected category
-if selected_category != 'All Categories':
-    filtered_data = data[data['product_category'] == selected_category]
-else:
-    filtered_data = data
-
-# Show filtered data
-st.write(f"Data for {selected_category}:", filtered_data)
-
-# Display statistics of ratings
-st.write(f"Statistics of Ratings for {selected_category}:", filtered_data['rate'].describe())
-
-# Urgent items (minimum rating) across all categories
-urgent_items = data[data['rate'] == data['rate'].min()]
-st.subheader('Most Urgent Items Across All Categories')
-st.write(urgent_items)
-
-# Visualization of rating distribution
+# Create a histogram of average rates for urgent products
+st.subheader('Distribution of Average Ratings for Urgent Products')
 fig, ax = plt.subplots()
-sns.countplot(data=filtered_data, x='rate', ax=ax)
-ax.set_title(f'Distribution of Ratings for {selected_category}')
+sns.histplot(urgent_products['rate_average'], bins=5, kde=False, ax=ax)
+plt.xlabel('Average Rating')
+plt.ylabel('Number of Products')
 st.pyplot(fig)
 
-# Pie chart of review categories
+# Generate a countplot by product category for urgent products
+st.subheader('Count of Urgent Products by Category')
 fig, ax = plt.subplots()
-filtered_data['review_category'].value_counts().plot(kind='pie', autopct='%1.1f%%', startangle=90)
-ax.set_title(f'Pie Chart of Review Categories for {selected_category}')
-ax.set_ylabel('')  # Hide the y-label
+sns.countplot(x='product_category', data=urgent_products, ax=ax)
+plt.xticks(rotation=45)
+plt.ylabel('Number of Products')
 st.pyplot(fig)
 
-# Product counts per category
-if selected_category == 'All Categories':
-    fig, ax = plt.subplots()
-    sns.countplot(data=data, x='product_category', ax=ax)
-    ax.set_title('Number of Products per Category')
-    plt.xticks(rotation=45)
-    st.pyplot(fig)
+# Final notes and suggestions section
+st.subheader('Recommendations for Improvement')
+st.write('Products listed here should be reviewed for potential improvements or further customer feedback analysis to understand the specific issues.')
