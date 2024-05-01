@@ -1,31 +1,43 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 
-# Load the CSV file
-data = pd.read_csv("amazon_reviews_processed.csv")
+# Load the Excel file
+data = pd.read_excel("updated_categories_reviews_corrected.xlsx")
 
-# Plot the distribution of the "rating (mean)" column
-st.subheader("Distribution of Ratings")
+# Title of the dashboard
+st.title('Amazon Seller Dashboard')
+
+# Sidebar for user inputs
+st.sidebar.header('User Input Features')
+selected_category = st.sidebar.selectbox('Select Product Category', data['product_category'].unique())
+
+# Filter data based on selected category
+filtered_data = data[data['product_category'] == selected_category]
+
+# Show filtered data
+st.write("Filtered Data:", filtered_data)
+
+# Display statistics
+st.write("Statistics of Ratings:", filtered_data['rate'].describe())
+
+# Visualization of rating distribution
 fig, ax = plt.subplots()
-data["rating (mean)"].plot.hist(bins=20, ax=ax)
-ax.set_title("Distribution of Ratings")
-ax.set_xlabel("Rating (mean)")
-ax.set_ylabel("Count")
+sns.countplot(data=filtered_data, x='rate', ax=ax)
+ax.set_title('Distribution of Ratings')
 st.pyplot(fig)
 
-# Get the most popular category from the "dominant_category" column
-st.subheader("Most Popular Category")
-most_popular_category = data["dominant_category"].mode()[0]
-st.write(f"The most popular category is: {most_popular_category}")
-
-# Calculate the worst products based on rating and number of reviews
-st.subheader("5 Worst Rated Products")
-data['weighted_rating'] = data['rating (mean)'] * data['number of reviews']
-worst_products = data.nsmallest(5, 'weighted_rating')[['title', 'rating (mean)', 'number of reviews', 'weighted_rating']]
+# Pie chart of review categories
 fig, ax = plt.subplots()
-ax.barh(worst_products['title'], worst_products['weighted_rating'], color='red')
-ax.set_title("5 Worst Rated Products")
-ax.set_xlabel("Weighted Rating")
-ax.set_ylabel("Product Title")
+filtered_data['review_category'].value_counts().plot(kind='pie', autopct='%1.1f%%', startangle=90)
+ax.set_title('Pie Chart of Review Categories')
+ax.set_ylabel('')  # Hide the y-label
+st.pyplot(fig)
+
+# Product counts per category
+fig, ax = plt.subplots()
+sns.countplot(data=data, x='product_category', ax=ax)
+ax.set_title('Number of Products per Category')
+plt.xticks(rotation=45)
 st.pyplot(fig)
