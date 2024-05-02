@@ -40,7 +40,12 @@ st.pyplot(fig)
 
 # Generate a countplot by product category for urgent products
 st.subheader('Count of Urgent Products by Category')
+# Generate a countplot by product category for urgent products
+st.subheader('Count of Urgent Products by Category')
 fig, ax = plt.subplots()
+sns.countplot(x='product_category', data=urgent_products, ax=ax)
+plt.xticks(rotation=45)
+plt.ylabel('Number of Products')
 sns.countplot(x='product_category', data=urgent_products, ax=ax)
 plt.xticks(rotation=45)
 plt.ylabel('Number of Products')
