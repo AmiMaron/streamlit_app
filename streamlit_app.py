@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import plotly.express as px
 
 # Load the Excel file
 data = pd.read_excel("updated_categories_reviews_corrected.xlsx")
@@ -12,7 +13,7 @@ def safe_divide(numerator, denominator):
 
 # Calculate component scores with safe division
 data['actuality_score'] = data.apply(lambda x: safe_divide(x['negative_rates_past_30_days'], x['num_of_negativ_rates']), axis=1)
-data['quantity_score'] = data['negative_rates_past_30_days']
+data['quantity_score'] = 0.5 * data['negative_rates_past_30_days']
 data['negativity_score'] = 5 - data['rate_average']
 
 # Assign weights
@@ -29,32 +30,38 @@ data['urgency_score'] = (data['actuality_score'] * weight_actuality) + \
 data['urgency_score'] = (data['urgency_score'] - data['urgency_score'].min()) / \
                         (data['urgency_score'].max() - data['urgency_score'].min())
 
-# Filter and display the top 5 urgent products
-top_urgent_products = data.nlargest(5, 'urgency_score')
+# Assuming 'review_category' is available in the data
+if 'review_category' not in data.columns:
+    data['review_category'] = pd.Series(['Category 1', 'Category 2', 'Category 3']).take(np.random.randint(0, 3, size=len(data)))
 
 # Start Streamlit app
 st.title('Amazon Seller Dashboard')
 st.write('This dashboard highlights products with urgent need for attention based on a sophisticated urgency score.')
 
-# Display the filtered data with urgency scores
-st.subheader('Top 5 Urgent Products Overview')
-st.dataframe(top_urgent_products[['product_name', 'product_category', 'num_of_negativ_rates', 'rate_average', 'negative_rates_past_30_days', 'urgency_score']])
+# Selection of product category
+selected_category = st.selectbox('Select Product Category', options=data['product_category'].unique())
+filtered_data = data[data['product_category'] == selected_category]
 
-# Create a histogram of urgency scores
-st.subheader('Distribution of Urgency Scores')
-fig, ax = plt.subplots()
-sns.histplot(data['urgency_score'], bins=10, kde=False, ax=ax)
-plt.xlabel('Urgency Score')
-plt.ylabel('Number of Products')
-st.pyplot(fig)
+# Bar plot for average urgency score by selected product category
+avg_urgency = filtered_data.groupby('review_category')['urgency_score'].mean().reset_index()
+fig = px.bar(avg_urgency, x='review_category', y='urgency_score', title='Average Urgency Score by Review Category in Selected Product Category')
+st.plotly_chart(fig)
 
-# Generate a countplot by product category for top urgent products
-st.subheader('Count of Top Urgent Products by Category')
-fig, ax = plt.subplots()
-sns.countplot(x='product_category', data=top_urgent_products, ax=ax)
-plt.xticks(rotation=45)
-plt.ylabel('Number of Products')
-st.pyplot(fig)
+# Interactive heatmap of urgency scores across product and review categories
+heatmap_data = data.pivot_table(index='product_category', columns='review_category', values='urgency_score', aggfunc='mean')
+fig = px.imshow(heatmap_data, labels=dict(x="Review Category", y="Product Category", color="Average Urgency Score"), title='Heatmap of Urgency Scores')
+st.plotly_chart(fig)
+
+# Time series analysis of urgency scores (assuming date field 'review_date' is available)
+if 'review_date' in data.columns:
+    data['date'] = pd.to_datetime(data['review_date'])
+    time_series_data = data.groupby(data['date'].dt.to_period("M"))['urgency_score'].mean()
+    fig, ax = plt.subplots()
+    time_series_data.plot(kind='line', ax=ax)
+    plt.xlabel('Month')
+    plt.ylabel('Average Urgency Score')
+    plt.title('Trend of Urgency Scores Over Time')
+    st.pyplot(fig)
 
 # Recommendations section
 st.subheader('Recommendations for Improvement')
