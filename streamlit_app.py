@@ -38,7 +38,7 @@ top_urgent_products = data.nlargest(5, 'urgency_score')
 
 # Display the filtered data with urgency scores
 st.subheader('Top 5 Urgent Products Overview')
-st.dataframe(top_urgent_products[['product_name', 'product_category', 'rate_average', 'num_of_negativ_rates', 'negative_rates_past_30_days', 'urgency_score']])
+st.dataframe(top_urgent_products[['product_name', 'product_category', 'review_category', 'rate_average', 'num_of_negativ_rates', 'negative_rates_past_30_days', 'urgency_score']])
 
 # Extend the dropdown options with 'All Categories'
 categories = ['All Categories'] + list(data['product_category'].unique())
