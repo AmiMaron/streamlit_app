@@ -68,13 +68,3 @@ fig = px.bar(category_avg_urgency, x='product_category', y='urgency_score',
              template='plotly_white')
 fig.update_layout(xaxis_tickangle=-45)  # Rotate labels for better readability
 st.plotly_chart(fig, use_container_width=True)  # Ensure the plot fits into the Streamlit container
-
-# Average urgency score by review category
-review_category_avg_urgency = data.groupby('review_category')['urgency_score'].mean().reset_index()
-fig = px.bar(review_category_avg_urgency, x='review_category', y='urgency_score',
-             title='Average Urgency Score by Review Category',
-             labels={'review_category': 'Review Category', 'urgency_score': 'Average Urgency Score'},
-             template='plotly_white')
-fig.update_layout(xaxis_tickangle=-45)  # Rotate labels for better readability
-st.plotly_chart(fig, use_container_width=True)  # Ensure the plot fits into the Streamlit container
-
