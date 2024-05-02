@@ -6,48 +6,46 @@ import seaborn as sns
 # Load the Excel file
 data = pd.read_excel("updated_categories_reviews_corrected.xlsx")
 
-# Title of the dashboard
+# Normalize the 'num_of_rates' and 'negative_rates_past_30_days'
+data['norm_num_of_rates'] = data['num_of_rates'] / data['num_of_rates'].max()
+data['norm_negative_rates'] = data['negative_rates_past_30_days'] / data['negative_rates_past_30_days'].max()
+
+# Calculate urgency score with arbitrary weights for demonstration
+weight_negative = 0.5
+weight_num_rates = 0.3
+weight_rate_average = 0.2
+data['urgency_score'] = (data['norm_negative_rates'] * weight_negative) + \
+                        (data['norm_num_of_rates'] * weight_num_rates) + \
+                        ((5 - data['rate_average']) * weight_rate_average)
+
+# Filter for high urgency products
+urgent_threshold = data['urgency_score'].quantile(0.75)  # Adjust threshold as necessary
+urgent_products = data[data['urgency_score'] >= urgent_threshold]
+
+# Start Streamlit app
 st.title('Amazon Seller Dashboard')
+st.write('This dashboard highlights products with urgent need for attention based on a sophisticated urgency score.')
 
-# Sidebar for user inputs
-st.sidebar.header('User Input Features')
-category_options = ['All Categories'] + list(data['product_category'].unique())
-selected_category = st.sidebar.selectbox('Select Product Category', category_options)
+# Display the filtered data with urgency scores
+st.subheader('Urgent Products Overview')
+st.dataframe(urgent_products[['product_name', 'product_category', 'num_of_rates', 'rate_average', 'negative_rates_past_30_days', 'urgency_score']])
 
-# Filter data based on selected category
-if selected_category != 'All Categories':
-    filtered_data = data[data['product_category'] == selected_category]
-else:
-    filtered_data = data
-
-# Show filtered data
-st.write(f"Data for {selected_category}:", filtered_data)
-
-# Display statistics of ratings
-st.write(f"Statistics of Ratings for {selected_category}:", filtered_data['rate'].describe())
-
-# Urgent items (minimum rating) across all categories
-urgent_items = data[data['rate'] == data['rate'].min()]
-st.subheader('Most Urgent Items Across All Categories')
-st.write(urgent_items)
-
-# Visualization of rating distribution
+# Create a histogram of urgency scores
+st.subheader('Distribution of Urgency Scores')
 fig, ax = plt.subplots()
-sns.countplot(data=filtered_data, x='rate', ax=ax)
-ax.set_title(f'Distribution of Ratings for {selected_category}')
+sns.histplot(urgent_products['urgency_score'], bins=10, kde=False, ax=ax)
+plt.xlabel('Urgency Score')
+plt.ylabel('Number of Products')
 st.pyplot(fig)
 
-# Pie chart of review categories
+# Generate a countplot by product category for urgent products
+st.subheader('Count of Urgent Products by Category')
 fig, ax = plt.subplots()
-filtered_data['review_category'].value_counts().plot(kind='pie', autopct='%1.1f%%', startangle=90)
-ax.set_title(f'Pie Chart of Review Categories for {selected_category}')
-ax.set_ylabel('')  # Hide the y-label
+sns.countplot(x='product_category', data=urgent_products, ax=ax)
+plt.xticks(rotation=45)
+plt.ylabel('Number of Products')
 st.pyplot(fig)
 
-# Product counts per category
-if selected_category == 'All Categories':
-    fig, ax = plt.subplots()
-    sns.countplot(data=data, x='product_category', ax=ax)
-    ax.set_title('Number of Products per Category')
-    plt.xticks(rotation=45)
-    st.pyplot(fig)
+# Recommendations section
+st.subheader('Recommendations for Improvement')
+st.write('Review the products listed here to identify potential quality issues or to improve customer service responses to negative feedback.')
