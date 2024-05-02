@@ -14,7 +14,7 @@ def safe_divide(numerator, denominator):
 # Calculate component scores with safe division
 data['actuality_score'] = data.apply(lambda x: safe_divide(x['negative_rates_past_30_days'], x['num_of_negativ_rates']), axis=1)
 data['quantity_score'] = 0.5 * data['negative_rates_past_30_days']
-data['negativity_score'] = 5 - data['rate_average']
+data['negativity_score'] = data['num_of_negativ_rates'] * (5 - data['rate_average'])
 
 # Assign weights
 weight_actuality = 0.3
