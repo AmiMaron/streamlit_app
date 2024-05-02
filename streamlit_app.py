@@ -6,17 +6,20 @@ import seaborn as sns
 # Load the Excel file
 data = pd.read_excel("updated_categories_reviews_corrected.xlsx")
 
-# Normalize the 'num_of_rates' and 'negative_rates_past_30_days'
-data['norm_num_of_rates'] = data['num_of_rates'] / data['num_of_rates'].max()
-data['norm_negative_rates'] = data['negative_rates_past_30_days'] / data['negative_rates_past_30_days'].max()
+# Calculate new component scores
+data['actuality_score'] = data['negative_rates_past_30_days'] / data['num_of_rates']
+data['quantity_score'] = data['negative_rates_past_30_days']
+data['negativity_score'] = 5 - data['rate_average']  # Assuming rate_average is on a scale of 1 to 5
 
-# Calculate urgency score with arbitrary weights for demonstration
-weight_negative = 0.5
-weight_num_rates = 0.3
-weight_rate_average = 0.2
-data['urgency_score'] = (data['norm_negative_rates'] * weight_negative) + \
-                        (data['norm_num_of_rates'] * weight_num_rates) + \
-                        ((5 - data['rate_average']) * weight_rate_average)
+# Assign weights
+weight_actuality = 0.4
+weight_quantity = 0.4
+weight_negativity = 0.2
+
+# Calculate new urgency score
+data['urgency_score'] = (data['actuality_score'] * weight_actuality) + \
+                        (data['quantity_score'] * weight_quantity) + \
+                        (data['negativity_score'] * weight_negativity)
 
 # Filter for high urgency products
 urgent_threshold = data['urgency_score'].quantile(0.75)  # Adjust threshold as necessary
@@ -40,12 +43,7 @@ st.pyplot(fig)
 
 # Generate a countplot by product category for urgent products
 st.subheader('Count of Urgent Products by Category')
-# Generate a countplot by product category for urgent products
-st.subheader('Count of Urgent Products by Category')
 fig, ax = plt.subplots()
-sns.countplot(x='product_category', data=urgent_products, ax=ax)
-plt.xticks(rotation=45)
-plt.ylabel('Number of Products')
 sns.countplot(x='product_category', data=urgent_products, ax=ax)
 plt.xticks(rotation=45)
 plt.ylabel('Number of Products')
