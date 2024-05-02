@@ -30,17 +30,31 @@ data['urgency_score'] = (data['actuality_score'] * weight_actuality) + \
 data['urgency_score'] = (data['urgency_score'] - data['urgency_score'].min()) / \
                         (data['urgency_score'].max() - data['urgency_score'].min())
 
-# Assuming 'review_category' is available in the data
-if 'review_category' not in data.columns:
-    data['review_category'] = pd.Series(['Category 1', 'Category 2', 'Category 3']).take(np.random.randint(0, 3, size=len(data)))
-
 # Start Streamlit app
 st.title('Amazon Seller Dashboard')
 st.write('This dashboard highlights products with urgent need for attention based on a sophisticated urgency score.')
 
+# Filter and display the top 5 urgent products
+top_urgent_products = data.nlargest(5, 'urgency_score')
+
+# Display the filtered data with urgency scores
+st.subheader('Top 5 Urgent Products Overview')
+st.dataframe(top_urgent_products[['product_name', 'product_category', 'num_of_negativ_rates', 'rate_average', 'negative_rates_past_30_days', 'urgency_score']])
+
+
+# Extend the dropdown options with 'All Categories'
+categories = ['All Categories'] + list(data['product_category'].unique())
+selected_category = st.selectbox('Select Product Category', options=categories)
+
+# Filter the data based on the selected category
+if selected_category != 'All Categories':
+    filtered_data = data[data['product_category'] == selected_category]
+else:
+    filtered_data = data  # Use the whole dataset if 'All Categories' is selected
+
 # Selection of product category
-selected_category = st.selectbox('Select Product Category', options=data['product_category'].unique())
-filtered_data = data[data['product_category'] == selected_category]
+# selected_category = st.selectbox('Select Product Category', options=data['product_category'].unique()) #?
+# filtered_data = data[data['product_category'] == selected_category] #?
 
 # Bar plot for average urgency score by selected product category
 avg_urgency = filtered_data.groupby('review_category')['urgency_score'].mean().reset_index()
@@ -52,17 +66,21 @@ heatmap_data = data.pivot_table(index='product_category', columns='review_catego
 fig = px.imshow(heatmap_data, labels=dict(x="Review Category", y="Product Category", color="Average Urgency Score"), title='Heatmap of Urgency Scores')
 st.plotly_chart(fig)
 
-# Time series analysis of urgency scores (assuming date field 'review_date' is available)
-if 'review_date' in data.columns:
-    data['date'] = pd.to_datetime(data['review_date'])
-    time_series_data = data.groupby(data['date'].dt.to_period("M"))['urgency_score'].mean()
-    fig, ax = plt.subplots()
-    time_series_data.plot(kind='line', ax=ax)
-    plt.xlabel('Month')
-    plt.ylabel('Average Urgency Score')
-    plt.title('Trend of Urgency Scores Over Time')
-    st.pyplot(fig)
+# Average urgency score by product category
+category_avg_urgency = data.groupby('product_category')['urgency_score'].mean().reset_index()
+fig, ax = plt.subplots()
+sns.barplot(x='product_category', y='urgency_score', data=category_avg_urgency, ax=ax)
+plt.xticks(rotation=45)
+plt.xlabel('Product Category')
+plt.ylabel('Average Urgency Score')
+st.pyplot(fig)
 
-# Recommendations section
-st.subheader('Recommendations for Improvement')
-st.write('Review the products listed here to identify potential quality issues or to improve customer service responses to negative feedback.')
+# Average urgency score by review category
+review_category_avg_urgency = data.groupby('review_category')['urgency_score'].mean().reset_index()
+fig, ax = plt.subplots()
+sns.barplot(x='review_category', y='urgency_score', data=review_category_avg_urgency, ax=ax)
+plt.xticks(rotation=45)
+plt.xlabel('Review Category')
+plt.ylabel('Average Urgency Score')
+st.pyplot(fig)
+
